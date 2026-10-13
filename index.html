@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>면접 도우미</title>
-<meta name="description" content="사진을 두고 질문을 듣고 답하는 면접 연습 도구. 질문 출제, 사진 확대, 준비·답변 타이머, 질문 음성 읽기를 지원해요.">
+<meta name="description" content="질문 출제, 사진 확대, 답변 타이머, 질문 음성 읽기를 지원하는 면접 연습 도구.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@500;700&display=swap">
 <style>
-/* Layout: 가로 3단. 왼쪽  사진, 가운데 질문, 오른쪽 타이머와 음성 읽기. 좁은 화면에서는 세로로 쌓는다. */
+/* Layout: 가로 3단. 왼쪽 사진, 가운데 질문, 오른쪽 타이머와 음성 읽기. 좁은 화면에서는 세로로 쌓는다. */
 :root {
   color-scheme: light;
   --bg: #FFFFFF;
@@ -68,11 +68,13 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
 .chip { font-size: 0.75rem; padding: 2px 10px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: var(--surface-2); }
 .qno { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-/*  사진 */
+/* 사진 */
 .photo-box { flex: 1; min-height: 300px; border: 1px dashed var(--line); border-radius: 8px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .photo-box.has { border-style: solid; background: #0F1A2E; }
-.photo-box img { display: block; width: 100%; height: 100%; max-height: 520px; object-fit: contain; cursor: zoom-in; }
-.photo-empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px; }
+.photo-box { cursor: pointer; }
+.photo-box.has { cursor: default; }
+.photo-box img { display: block; margin: auto; width: auto; height: auto; max-width: 100%; max-height: 520px; object-fit: contain; cursor: zoom-in; }
+.photo-empty { display: flex; align-items: center; justify-content: center; color: var(--muted); }
 .hint { color: var(--muted); font-size: 0.8rem; margin: 0; }
 
 /* 질문 */
@@ -86,9 +88,6 @@ input[type="text"] { width: 100%; background: var(--surface); }
 .form-stack { display: flex; flex-direction: column; gap: 8px; }
 
 /* 타이머 */
-.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.tab { background: var(--surface-2); }
-.tab[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .ring-wrap { position: relative; width: min(200px, 100%); aspect-ratio: 1; margin: 0 auto; }
 .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring-bg { fill: none; stroke: var(--line); stroke-width: 10; }
@@ -98,7 +97,7 @@ input[type="text"] { width: 100%; background: var(--surface); }
 .time { font-family: var(--font-mono); font-size: 2.6rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .ring-wrap.warn .time { color: var(--warn); }
 .phase-name { color: var(--muted); font-size: 0.85rem; }
-.settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.settings { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); }
 .settings select { width: 100%; }
 .banner { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; }
@@ -126,21 +125,20 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 <div class="wrap">
   <header>
     <h1>면접 도우미</h1>
-    <p class="sub"> 사진 · 질문 · 타이머 · 음성 읽기</p>
+    <p class="sub">질문 · 타이머 · 음성 읽기</p>
   </header>
 
   <div class="board">
-    <section class="panel" aria-label=" 사진">
-      <div class="row between">
-        <span class="label"></span>
+    <section class="panel" aria-label="사진">
+      <div class="row" style="justify-content:flex-end">
         <div class="row">
-          <button id="pick" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 100-8 4 4 0 000 8z"/></svg><span id="pickLabel">사진 추가</span></button>
+          <button id="pick" type="button"><span id="pickLabel">사진 추가</span></button>
           <button id="rmimg" type="button" class="ghost" hidden>삭제</button>
         </div>
       </div>
       <input type="file" id="file" accept="image/*" hidden>
       <div class="photo-box" id="photoBox">
-        <div class="photo-empty" id="photoEmpty">사진을 올려 보세요.<br>사진을 보며 연습하면 실제 면접처럼 시선과 말투를 익힐 수 있어요.</div>
+        <div class="photo-empty" id="photoEmpty" aria-hidden="true"></div>
         <img id="photo" alt="사진" hidden>
       </div>
       <p class="hint">사진을 누르면 전체 화면으로 열려요. 사진은 이 기기의 브라우저에만 저장돼요.</p>
@@ -174,19 +172,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 
     <div class="timer-col">
       <section class="panel" aria-label="타이머">
-        <span class="label">타이머</span>
-        <div class="tabs" role="group" aria-label="단계">
-          <button type="button" class="tab" id="tabPrep" aria-pressed="true">준비</button>
-          <button type="button" class="tab" id="tabAns" aria-pressed="false">답변</button>
-        </div>
+        <span class="label">답변 타이머</span>
         <div class="ring-wrap" id="ringWrap">
           <svg viewBox="0 0 120 120" aria-hidden="true">
             <circle class="ring-bg" cx="60" cy="60" r="52"/>
             <circle class="ring-fg" id="ring" cx="60" cy="60" r="52"/>
           </svg>
           <div class="ring-center">
-            <div class="time" id="time" role="timer" aria-live="off">01:00</div>
-            <div class="phase-name" id="phaseName">준비 시간</div>
+            <div class="time" id="time" role="timer" aria-live="off">02:00</div>
+            <div class="phase-name">답변 시간</div>
           </div>
         </div>
         <div class="row" style="justify-content:center">
@@ -194,14 +188,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
           <button id="reset" type="button">초기화</button>
         </div>
         <div class="settings">
-          <label>준비 시간
-            <select id="selPrep">
-              <option value="30">30초</option>
-              <option value="60" selected>1분</option>
-              <option value="120">2분</option>
-              <option value="180">3분</option>
-            </select>
-          </label>
           <label>답변 시간
             <select id="selAns">
               <option value="60">1분</option>
@@ -212,7 +198,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
             </select>
           </label>
         </div>
-        <label class="check"><input type="checkbox" id="autoRead" checked><span>준비 시간이 시작되면 질문을 읽어 주기</span></label>
+        <label class="check"><input type="checkbox" id="autoRead" checked><span>시작하면 질문을 읽어 주기</span></label>
         <div class="banner" id="banner" hidden></div>
       </section>
 
@@ -245,7 +231,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
     <button id="vclose" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>닫기</button>
   </div>
-  <div class="v-stage" id="stage"><img id="vimg" alt="확대한 면접관 사진" draggable="false"></div>
+  <div class="v-stage" id="stage"><img id="vimg" alt="확대한 사진" draggable="false"></div>
   <div class="v-tip">휠이나 두 손가락으로 확대하고, 끌어서 이동해요. 두 번 누르면 확대·원래대로 전환돼요.</div>
 </div>
 
@@ -302,7 +288,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   }
   var cur = 0;
 
-  /* ---------- 면접관 사진 ---------- */
+  /* ---------- 사진 ---------- */
   var curUrl = null;
   function showPhoto(blob) {
     if (curUrl) { try { URL.revokeObjectURL(curUrl); } catch (e) {} curUrl = null; }
@@ -337,6 +323,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     });
   }
   $('pick').onclick = function () { $('file').click(); };
+  $('photoBox').onclick = function (e) { if (!curUrl && e.target !== $('pick')) $('file').click(); };
   $('file').onchange = function () {
     var f = $('file').files && $('file').files[0];
     if (!f) return;
@@ -528,11 +515,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     } catch (e) {}
   }
 
-  /* ---------- 타이머 ---------- */
+  /* ---------- 답변 타이머 ---------- */
   var C = 2 * Math.PI * 52;
   var ring = $('ring');
   ring.style.strokeDasharray = C;
-  var T = { phase: 'prep', dur: { prep: 60, ans: 120 }, remain: 60, end: 0, state: 'idle', id: null };
+  var T = { dur: 120, remain: 120, end: 0, state: 'idle', id: null };
 
   function fmt(sec) {
     var s = Math.max(0, Math.ceil(sec));
@@ -541,10 +528,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   }
   function renderTimer() {
     $('time').textContent = fmt(T.remain);
-    ring.style.strokeDashoffset = C * (1 - T.remain / T.dur[T.phase]);
-    $('phaseName').textContent = T.phase === 'prep' ? '준비 시간' : '답변 시간';
-    $('tabPrep').setAttribute('aria-pressed', String(T.phase === 'prep'));
-    $('tabAns').setAttribute('aria-pressed', String(T.phase === 'ans'));
+    ring.style.strokeDashoffset = C * (1 - T.remain / T.dur);
     $('ringWrap').classList.toggle('warn', T.state === 'running' && T.remain <= 10);
     $('start').textContent = T.state === 'running' ? '일시정지' : (T.state === 'paused' ? '계속' : '시작');
   }
@@ -554,19 +538,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     b.textContent = t; b.hidden = false;
   }
   function stopLoop() { if (T.id) { clearInterval(T.id); T.id = null; } }
-  function setPhase(p) { T.phase = p; T.remain = T.dur[p]; renderTimer(); }
   function tick() {
     T.remain = Math.max(0, (T.end - Date.now()) / 1000);
     if (T.remain <= 0) {
-      if (T.phase === 'prep') {
-        beep(2);
-        setPhase('ans');
-        T.end = Date.now() + T.dur.ans * 1000;
-        showBanner('준비 끝. 답변을 시작하세요.');
-      } else {
-        stopLoop(); T.state = 'idle'; T.remain = 0; beep(3);
-        showBanner('답변 시간이 끝났어요.');
-      }
+      stopLoop(); T.state = 'idle'; T.remain = 0; beep(3);
+      showBanner('답변 시간이 끝났어요.');
     }
     renderTimer();
   }
@@ -576,24 +552,24 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       T.state = 'paused'; stopLoop(); renderTimer(); return;
     }
     var fresh = T.state === 'idle';
-    if (T.remain <= 0) T.remain = T.dur[T.phase];
+    if (T.remain <= 0) T.remain = T.dur;
     T.end = Date.now() + T.remain * 1000;
     T.state = 'running';
     showBanner('');
     stopLoop(); T.id = setInterval(tick, 100);
     renderTimer();
-    if (fresh && T.phase === 'prep' && $('autoRead').checked && questions.length) speak();
+    if (fresh && $('autoRead').checked && questions.length) speak();
   }
   function resetTimer() {
     stopLoop(); T.state = 'idle'; showBanner('');
-    T.remain = T.dur[T.phase]; renderTimer();
+    T.remain = T.dur; renderTimer();
   }
   $('start').onclick = startTimer;
   $('reset').onclick = function () { stopSpeech(); resetTimer(); };
-  $('tabPrep').onclick = function () { stopLoop(); T.state = 'idle'; showBanner(''); setPhase('prep'); };
-  $('tabAns').onclick = function () { stopLoop(); T.state = 'idle'; showBanner(''); setPhase('ans'); };
-  $('selPrep').onchange = function () { T.dur.prep = +$('selPrep').value; if (T.state === 'idle' && T.phase === 'prep') setPhase('prep'); };
-  $('selAns').onchange = function () { T.dur.ans = +$('selAns').value; if (T.state === 'idle' && T.phase === 'ans') setPhase('ans'); };
+  $('selAns').onchange = function () {
+    T.dur = +$('selAns').value;
+    if (T.state === 'idle') { T.remain = T.dur; renderTimer(); }
+  };
 
   /* ---------- 음성 읽기 ---------- */
   var hasTTS = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
