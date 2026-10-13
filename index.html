@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>면접 도우미</title>
-<meta name="description" content="면접관 사진을 두고 질문을 듣고 답하는 면접 연습 도구. 질문 출제, 사진 확대, 준비·답변 타이머, 질문 음성 읽기를 지원해요.">
+<meta name="description" content="사진을 두고 질문을 듣고 답하는 면접 연습 도구. 질문 출제, 사진 확대, 준비·답변 타이머, 질문 음성 읽기를 지원해요.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@500;700&display=swap">
 <style>
-/* Layout: 가로 3단. 왼쪽 면접관 사진, 가운데 질문, 오른쪽 타이머와 음성 읽기. 좁은 화면에서는 세로로 쌓는다. */
+/* Layout: 가로 3단. 왼쪽  사진, 가운데 질문, 오른쪽 타이머와 음성 읽기. 좁은 화면에서는 세로로 쌓는다. */
 :root {
   color-scheme: light;
   --bg: #FFFFFF;
@@ -68,7 +68,7 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
 .chip { font-size: 0.75rem; padding: 2px 10px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: var(--surface-2); }
 .qno { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-/* 면접관 사진 */
+/*  사진 */
 .photo-box { flex: 1; min-height: 300px; border: 1px dashed var(--line); border-radius: 8px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .photo-box.has { border-style: solid; background: #0F1A2E; }
 .photo-box img { display: block; width: 100%; height: 100%; max-height: 520px; object-fit: contain; cursor: zoom-in; }
@@ -126,13 +126,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 <div class="wrap">
   <header>
     <h1>면접 도우미</h1>
-    <p class="sub">면접관 사진 · 질문 · 타이머 · 음성 읽기</p>
+    <p class="sub"> 사진 · 질문 · 타이머 · 음성 읽기</p>
   </header>
 
   <div class="board">
-    <section class="panel" aria-label="면접관 사진">
+    <section class="panel" aria-label=" 사진">
       <div class="row between">
-        <span class="label">면접관</span>
+        <span class="label"></span>
         <div class="row">
           <button id="pick" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 100-8 4 4 0 000 8z"/></svg><span id="pickLabel">사진 추가</span></button>
           <button id="rmimg" type="button" class="ghost" hidden>삭제</button>
@@ -140,8 +140,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
       <input type="file" id="file" accept="image/*" hidden>
       <div class="photo-box" id="photoBox">
-        <div class="photo-empty" id="photoEmpty">면접관 사진을 올려 보세요.<br>사진을 보며 연습하면 실제 면접처럼 시선과 말투를 익힐 수 있어요.</div>
-        <img id="photo" alt="면접관 사진" hidden>
+        <div class="photo-empty" id="photoEmpty">사진을 올려 보세요.<br>사진을 보며 연습하면 실제 면접처럼 시선과 말투를 익힐 수 있어요.</div>
+        <img id="photo" alt="사진" hidden>
       </div>
       <p class="hint">사진을 누르면 전체 화면으로 열려요. 사진은 이 기기의 브라우저에만 저장돼요.</p>
     </section>
