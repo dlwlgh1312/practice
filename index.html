@@ -24,6 +24,26 @@ svg.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;strok
 .banner{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:.85rem}.check{display:flex;gap:8px;align-items:flex-start;font-size:.9rem}.check input{margin-top:5px;width:16px;height:16px;accent-color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent)}.field{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)}.field select{width:100%}
 .stopwatch-time{font-family:var(--font-mono);font-size:clamp(2rem,5vw,2.8rem);font-weight:600;font-variant-numeric:tabular-nums;text-align:center;letter-spacing:-.04em;padding:18px 0}.stopwatch-buttons{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.stopwatch-buttons button{min-width:100px}.stopwatch-status{color:var(--muted);font-size:.8rem;text-align:center;margin:0}
 .viewer{position:fixed;inset:0;background:rgba(5,8,15,.94);z-index:50;display:flex;flex-direction:column}.viewer[hidden]{display:none!important}.v-bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 16px;flex-wrap:wrap}.v-bar button{background:#1b2538;color:#e6ebf4;border-color:#34425e}.v-bar .zoom-read{font-family:var(--font-mono);color:#e6ebf4;min-width:56px;text-align:center;font-variant-numeric:tabular-nums}.v-stage{flex:1;position:relative;overflow:hidden;touch-action:none;cursor:grab}.v-stage.drag{cursor:grabbing}.v-stage img{position:absolute;left:50%;top:50%;max-width:92%;max-height:92%;transform-origin:50% 50%;user-select:none;-webkit-user-drag:none;will-change:transform}.v-tip{color:#9aa6ba;text-align:center;font-size:.8rem;padding:8px 16px 12px}
+
+.recorder-panel{grid-column:1/-1}
+.recorder-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.recorder-status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.88rem}
+.rec-dot{width:9px;height:9px;border-radius:50%;background:#9ca3af;display:inline-block}
+.recorder-panel.recording .rec-dot{background:#dc2626;box-shadow:0 0 0 5px #fee2e2;animation:recPulse 1.2s infinite}
+.recorder-panel.recording .recorder-status{color:#b91c1c}
+@keyframes recPulse{50%{opacity:.45}}
+.recorder-clock{font:600 clamp(2rem,5vw,2.8rem)/1.2 var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.recorder-meter{height:7px;background:var(--line);border-radius:99px;overflow:hidden}
+.recorder-meter span{display:block;height:100%;width:0;background:var(--accent);transition:width .08s linear}
+.recorder-files{display:flex;flex-direction:column;gap:8px}
+.recording-file{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.recording-file audio{width:min(100%,380px);height:36px}
+.recording-file .file-meta{min-width:0;display:flex;flex-direction:column}
+.recording-file .file-name{font-weight:600;overflow-wrap:anywhere}
+.recording-file .file-sub{font-size:.78rem;color:var(--muted)}
+.recorder-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:680px){.recorder-panel{grid-column:auto}.recording-file{align-items:stretch}.recording-file audio{width:100%}.recording-file .recorder-actions{width:100%}.recording-file .recorder-actions button{flex:1}}
+
 @media(prefers-reduced-motion:reduce){.ring-fg{transition:none}}
 </style>
 </head>
@@ -79,6 +99,24 @@ svg.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;strok
 </section>
 </div>
 </div>
+<section class="panel recorder-panel" id="recorderPanel" aria-label="답변 녹음">
+  <div class="recorder-top">
+    <div>
+      <span class="label">답변 녹음</span>
+      <div class="recorder-status" style="margin-top:6px"><span class="rec-dot" aria-hidden="true"></span><span id="recStatus" aria-live="polite">녹음할 준비가 됐어요.</span></div>
+    </div>
+    <div class="recorder-clock" id="recClock" role="timer" aria-label="녹음 시간">00:00</div>
+  </div>
+  <div class="recorder-meter" aria-hidden="true"><span id="recMeter"></span></div>
+  <div class="row">
+    <button id="recStart" type="button" class="primary">● 녹음 시작</button>
+    <button id="recPause" type="button" disabled>일시정지</button>
+    <button id="recStop" type="button" disabled>녹음 종료</button>
+  </div>
+  <p class="hint" id="recHint">마이크 권한이 필요합니다. 녹음은 이 페이지에서 처리되며, 저장 버튼을 눌러 파일로 받을 수 있습니다.</p>
+  <div class="row between"><strong>녹음 파일</strong><span class="chip" id="recCount">0개</span></div>
+  <div class="recorder-files" id="recordingFiles"><p class="hint">아직 녹음 파일이 없습니다.</p></div>
+</section>
 </div>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="사진 확대 보기">
   <div class="v-bar"><div class="row"><button id="zout" type="button" aria-label="축소"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zoom-read" id="zread">100%</span><button id="zin" type="button" aria-label="확대"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button id="zreset" type="button">원래대로</button></div><button id="vclose" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>닫기</button></div>
@@ -149,6 +187,57 @@ function speak(){if(!hasTTS||!questions.length)return;speechSynthesis.cancel();v
 function stopSpeech(){if(hasTTS)speechSynthesis.cancel();}
 if(hasTTS){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}else{$('stopSpeak').disabled=true;$('voice').disabled=true;$('rate').disabled=true;$('ttsHint').textContent='이 브라우저는 음성 읽기를 지원하지 않아요.';}
 $('speak').onclick=speak;$('stopSpeak').onclick=stopSpeech;$('rate').oninput=function(){$('rateOut').textContent=(+$('rate').value).toFixed(1)+'×';};
+
+// Audio recording: MediaRecorder + downloadable local audio files.
+var recorder=null,recStream=null,recChunks=[],recStartedAt=0,recElapsed=0,recTick=null,recPaused=false,recordings=[],meterCtx=null,meterAnalyser=null,meterSource=null,meterFrame=null;
+function recFmt(ms){var s=Math.floor(Math.max(0,ms)/1000),m=Math.floor(s/60),r=s%60;return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0');}
+function recSetStatus(text){$('recStatus').textContent=text;}
+function recUpdateClock(){var ms=recElapsed+(recorder&&!recPaused&&recStartedAt?Date.now()-recStartedAt:0);$('recClock').textContent=recFmt(ms);}
+function recStartClock(){if(recTick)clearInterval(recTick);recTick=setInterval(recUpdateClock,200);recUpdateClock();}
+function recStopClock(){if(recTick){clearInterval(recTick);recTick=null;}recUpdateClock();}
+function recCleanupStream(){if(recStream){recStream.getTracks().forEach(function(t){t.stop();});recStream=null;}if(meterFrame)cancelAnimationFrame(meterFrame);meterFrame=null;if(meterCtx){meterCtx.close().catch(function(){});meterCtx=null;}meterAnalyser=null;meterSource=null;$('recMeter').style.width='0%';}
+function recMeterLoop(){if(!meterAnalyser)return;var data=new Uint8Array(meterAnalyser.fftSize);meterAnalyser.getByteTimeDomainData(data);var sum=0;for(var i=0;i<data.length;i++){var v=(data[i]-128)/128;sum+=v*v;}var rms=Math.sqrt(sum/data.length);$('recMeter').style.width=Math.min(100,Math.max(3,rms*260))+'%';meterFrame=requestAnimationFrame(recMeterLoop);}
+function recRenderFiles(){
+ var box=$('recordingFiles');box.innerHTML='';$('recCount').textContent=recordings.length+'개';
+ if(!recordings.length){var p=document.createElement('p');p.className='hint';p.textContent='아직 녹음 파일이 없습니다.';box.appendChild(p);return;}
+ recordings.forEach(function(item,index){
+  var card=document.createElement('div');card.className='recording-file';
+  var meta=document.createElement('div');meta.className='file-meta';
+  var name=document.createElement('span');name.className='file-name';name.textContent=item.name;
+  var sub=document.createElement('span');sub.className='file-sub';sub.textContent=recFmt(item.duration)+' · '+(item.blob.type||'audio/webm');
+  meta.appendChild(name);meta.appendChild(sub);
+  var audio=document.createElement('audio');audio.controls=true;audio.preload='metadata';audio.src=item.url;audio.setAttribute('aria-label',item.name+' 미리 듣기');
+  var actions=document.createElement('div');actions.className='recorder-actions';
+  var download=document.createElement('a');download.href=item.url;download.download=item.name;download.textContent='파일 받기';download.className='download-a';
+  var del=document.createElement('button');del.type='button';del.className='ghost danger';del.textContent='삭제';del.onclick=function(){if(!confirm('이 녹음 파일을 목록에서 삭제할까요?'))return;URL.revokeObjectURL(item.url);recordings.splice(index,1);recRenderFiles();};
+  actions.appendChild(download);actions.appendChild(del);card.appendChild(meta);card.appendChild(audio);card.appendChild(actions);box.appendChild(card);
+ });
+}
+var recStyle=document.createElement('style');recStyle.textContent='.download-a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border:1px solid var(--accent);border-radius:8px;color:var(--accent);text-decoration:none;font-weight:600}.download-a:hover{background:var(--surface-2)}';document.head.appendChild(recStyle);
+function recStopTracksSoon(){recCleanupStream();}
+$('recStart').onclick=async function(){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){recSetStatus('이 브라우저에서는 녹음을 지원하지 않습니다.');$('recHint').textContent='최신 Chrome, Edge, Firefox 또는 Safari에서 HTTPS나 localhost로 페이지를 열어 주세요.';return;}
+ $('recStart').disabled=true;recSetStatus('마이크 권한을 확인하는 중…');
+ try{
+  recStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  var mime='';if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus'))mime='audio/webm;codecs=opus';else if(MediaRecorder.isTypeSupported('audio/webm'))mime='audio/webm';else if(MediaRecorder.isTypeSupported('audio/mp4'))mime='audio/mp4';else if(MediaRecorder.isTypeSupported('audio/ogg;codecs=opus'))mime='audio/ogg;codecs=opus';
+  recorder=new MediaRecorder(recStream,mime?{mimeType:mime}:undefined);recChunks=[];recElapsed=0;recStartedAt=Date.now();recPaused=false;
+  recorder.ondataavailable=function(e){if(e.data&&e.data.size)recChunks.push(e.data);};
+  recorder.onerror=function(){recSetStatus('녹음 중 오류가 발생했습니다.');};
+  recorder.onstop=function(){
+   var blob=new Blob(recChunks,{type:recorder.mimeType||'audio/webm'}),duration=recElapsed;
+   if(blob.size){var ext=blob.type.indexOf('mp4')>=0?'m4a':blob.type.indexOf('ogg')>=0?'ogg':blob.type.indexOf('webm')>=0?'webm':'audio';var stamp=new Date().toISOString().replace(/[:.]/g,'-');recordings.unshift({name:'면접답변_'+stamp+'.'+ext,blob:blob,url:URL.createObjectURL(blob),duration:duration});recRenderFiles();recSetStatus('녹음이 완료되었습니다. 파일 받기를 눌러 저장하세요.');}
+   else recSetStatus('녹음 데이터가 없어 파일을 만들지 못했습니다.');
+   recStopClock();recStopTracksSoon();recorder=null;recPaused=false;$('recStart').disabled=false;$('recPause').disabled=true;$('recStop').disabled=true;$('recPause').textContent='일시정지';$('recorderPanel').classList.remove('recording');
+  };
+  try{meterCtx=new(window.AudioContext||window.webkitAudioContext)();meterAnalyser=meterCtx.createAnalyser();meterAnalyser.fftSize=256;meterSource=meterCtx.createMediaStreamSource(recStream);meterSource.connect(meterAnalyser);recMeterLoop();}catch(e){}
+  recorder.start(250);$('recPause').disabled=false;$('recStop').disabled=false;$('recorderPanel').classList.add('recording');recSetStatus('녹음 중입니다. 말씀해 주세요.');$('recHint').textContent='녹음 중에는 브라우저 탭을 닫지 마세요. 녹음 종료 후 파일을 받을 수 있습니다.';recStartClock();
+ }catch(err){recCleanupStream();$('recStart').disabled=false;recSetStatus(err&&err.name==='NotAllowedError'?'마이크 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.':'마이크를 사용할 수 없습니다.');}
+};
+$('recPause').onclick=function(){if(!recorder)return;if(!recPaused&&recorder.state==='recording'){recElapsed+=Date.now()-recStartedAt;recPaused=true;recorder.pause();$('recPause').textContent='계속 녹음';recSetStatus('일시정지됨');}else if(recPaused&&recorder.state==='paused'){recPaused=false;recStartedAt=Date.now();recorder.resume();$('recPause').textContent='일시정지';recSetStatus('녹음 중입니다.');}recUpdateClock();};
+$('recStop').onclick=function(){if(!recorder)return;if(!recPaused)recElapsed+=Date.now()-recStartedAt;recPaused=true;recorder.stop();};
+window.addEventListener('beforeunload',function(){recordings.forEach(function(r){URL.revokeObjectURL(r.url);});});
+
 renderQuestion();renderTimer();stopwatchRender();
 })();
 </script>
