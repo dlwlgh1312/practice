@@ -118,7 +118,7 @@ svg.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;strok
     <button id="recStop" type="button" disabled>녹음 종료</button>
   </div>
   <p class="hint" id="recHint">마이크 권한이 필요합니다. 녹음은 이 페이지에서 처리되며, 저장 버튼을 눌러 파일로 받을 수 있습니다.</p>
-  <div class="row between"><strong>녹음 파일</strong><span class="chip" id="recCount">0개</span></div>
+  <div class="row between"><strong>녹음 파일</strong><div class="row" style="gap:8px"><span class="chip" id="recCount">0개</span><button id="recDeleteAll" type="button" class="ghost danger" disabled>일괄 삭제</button></div></div>
   <div class="recorder-files" id="recordingFiles"><p class="hint">아직 녹음 파일이 없습니다.</p></div>
 </section>
 </div>
@@ -207,7 +207,7 @@ function recStopClock(){if(recTick){clearInterval(recTick);recTick=null;}recUpda
 function recCleanupStream(){if(recStream){recStream.getTracks().forEach(function(t){t.stop();});recStream=null;}if(meterFrame)cancelAnimationFrame(meterFrame);meterFrame=null;if(meterCtx){meterCtx.close().catch(function(){});meterCtx=null;}meterAnalyser=null;meterSource=null;$('recMeter').style.width='0%';}
 function recMeterLoop(){if(!meterAnalyser)return;var data=new Uint8Array(meterAnalyser.fftSize);meterAnalyser.getByteTimeDomainData(data);var sum=0;for(var i=0;i<data.length;i++){var v=(data[i]-128)/128;sum+=v*v;}var rms=Math.sqrt(sum/data.length);$('recMeter').style.width=Math.min(100,Math.max(3,rms*260))+'%';meterFrame=requestAnimationFrame(recMeterLoop);}
 function recRenderFiles(){
- var box=$('recordingFiles');box.innerHTML='';$('recCount').textContent=recordings.length+'개';
+ var box=$('recordingFiles');box.innerHTML='';$('recCount').textContent=recordings.length+'개';$('recDeleteAll').disabled=recordings.length===0;
  if(!recordings.length){var p=document.createElement('p');p.className='hint';p.textContent='아직 녹음 파일이 없습니다.';box.appendChild(p);return;}
  recordings.forEach(function(item,index){
   var card=document.createElement('div');card.className='recording-file';
@@ -222,6 +222,12 @@ function recRenderFiles(){
   actions.appendChild(download);actions.appendChild(del);card.appendChild(meta);card.appendChild(audio);card.appendChild(actions);box.appendChild(card);
  });
 }
+$('recDeleteAll').onclick=function(){
+ if(!recordings.length)return;
+ if(!confirm('녹음 파일 '+recordings.length+'개를 모두 목록에서 삭제할까요? 삭제하면 이 페이지에서 다시 받을 수 없습니다.'))return;
+ recordings.forEach(function(item){URL.revokeObjectURL(item.url);});
+ recordings=[];recRenderFiles();recSetStatus('녹음 파일 목록을 모두 삭제했습니다.');
+};
 var recStyle=document.createElement('style');recStyle.textContent='.download-a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border:1px solid var(--accent);border-radius:8px;color:var(--accent);text-decoration:none;font-weight:600}.download-a:hover{background:var(--surface-2)}';document.head.appendChild(recStyle);
 function recStopTracksSoon(){recCleanupStream();}
 $('recStart').onclick=async function(){
@@ -236,6 +242,11 @@ $('recStart').onclick=async function(){
   recorder.onstop=async function(){
    var sourceBlob=new Blob(recChunks,{type:recorder.mimeType||'audio/webm'}),duration=recElapsed;
    try{
+    if(duration<5000){
+     recSetStatus('녹음 시간이 5초 미만이라 파일을 저장하지 않았습니다.');
+     $('recHint').textContent='녹음 파일은 5초 이상 녹음했을 때만 목록에 추가됩니다.';
+     return;
+    }
     if(!sourceBlob.size)throw new Error('녹음 데이터가 없습니다.');
     if(!window.lamejs)throw new Error('MP3 변환 모듈을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
     recSetStatus('MP3 파일로 변환 중…');
@@ -258,7 +269,7 @@ $('recStart').onclick=async function(){
     recordings.unshift({name:baseName+'.mp3',blob:blob,url:URL.createObjectURL(blob),duration:duration});
     recRenderFiles();recSetStatus('MP3 녹음 파일이 완성되었습니다. 파일 받기를 눌러 저장하세요.');
    }catch(err){recSetStatus('MP3 변환 실패: '+(err&&err.message?err.message:'알 수 없는 오류'));}
-   recStopClock();recStopTracksSoon();recorder=null;recPaused=false;$('recStart').disabled=false;$('recPause').disabled=true;$('recStop').disabled=true;$('recPause').textContent='일시정지';$('recorderPanel').classList.remove('recording');
+   finally{recStopClock();recStopTracksSoon();recorder=null;recPaused=false;$('recStart').disabled=false;$('recPause').disabled=true;$('recStop').disabled=true;$('recPause').textContent='일시정지';$('recorderPanel').classList.remove('recording');}
   };
   try{meterCtx=new(window.AudioContext||window.webkitAudioContext)();meterAnalyser=meterCtx.createAnalyser();meterAnalyser.fftSize=256;meterSource=meterCtx.createMediaStreamSource(recStream);meterSource.connect(meterAnalyser);recMeterLoop();}catch(e){}
   recorder.start(250);$('recPause').disabled=false;$('recStop').disabled=false;$('recorderPanel').classList.add('recording');recSetStatus('녹음 중입니다. 말씀해 주세요.');$('recHint').textContent='녹음 중에는 브라우저 탭을 닫지 마세요. 녹음 종료 후 파일을 받을 수 있습니다.';recStartClock();
